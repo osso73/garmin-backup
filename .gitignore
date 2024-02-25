@@ -2,6 +2,7 @@
 data/
 .garminconnect/
 src/example_from_GarminConnect.py
+resources/
 
 
 # Byte-compiled / optimized / DLL files

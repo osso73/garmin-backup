@@ -64,8 +64,8 @@ python garmin-backup data  # see the usage below for all the available options
     The username and password can also be provided through environment variables 
     USER and PASSWORD. If not provided through command line or environment 
     variables, the program will prompt for this information the first time. The 
-    credential information will then be stored in .garminconnect folder, and re-used 
-    for the future, until they need to be refreshed.
+    credential information will then be stored in .garminconnect folder under user
+    profile, and re-used for the future, until they need to be refreshed.
 
     All activities between S_DATE and E_DATE that are not already present in <path> 
     will be downloaded. If no dates are provided, it will assume all activities, 
