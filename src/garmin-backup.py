@@ -54,10 +54,10 @@ from docopt import docopt
 
 from garminconnect import Garmin, GarminConnectAuthenticationError
 
-from activities import activities
+from activities import ACTIVITIES
 
 
-__version__ = 0.5
+__version__ = 0.6
 BASE_PATH = os.path.dirname(__file__)
 TOKEN_STORE_DIR = os.path.join(BASE_PATH, ".garminconnect")
 MAX_ACTIVITIES = 100
@@ -71,25 +71,40 @@ logger = logging.getLogger(__name__)
 class FakeGarmin:
     """used to test without connecting to Garmin"""
     def get_activities(self, start:int, limit:int):
-        return activities
+        return ACTIVITIES
 
 
-    def get_activities_by_date(self, startdate: datetime.date, enddate: datetime.date, activitytype:str=None):
+    def get_activities_by_date(self, 
+        startdate: datetime.date, enddate: datetime.date, 
+        activitytype:str=None
+    ):
         """get activities between dates"""
 
         idx = []
-        for i, activity in enumerate(activities):
+        for i, activity in enumerate(ACTIVITIES):
             date = datetime.datetime.fromisoformat(activity['startTimeLocal'])
             if startdate <= date.date() <= enddate:
                 idx.append(i)
         
-        return [ activities[i] for i in idx ]
+        return [ ACTIVITIES[i] for i in idx ]
 
 
-    def download_activity(self, activity_id:str, dl_fmt=Garmin.ActivityDownloadFormat.GPX):
+    def download_activity(self, 
+        activity_id:str, dl_fmt=Garmin.ActivityDownloadFormat.GPX
+    ):
         """Download activity requested in requested format"""
         return f"Activity {activity_id}: long string of characters...".encode()
+    
 
+    def get_full_name(self):
+        """Return full name of the user"""
+        return "Oriol Pujol"
+
+
+
+def print_separator():
+    """print line in terminal, to separate sections"""
+    print('-' * 50)
 
 
 def get_credentials():
@@ -177,11 +192,14 @@ def parse_arguments(arguments: dict[str: str]) -> dict:
     args['--formats'] = args['--formats'].lower().split()
     for format in args['--formats']:
         if format not in ['original', 'gpx', 'csv', 'tcx', 'kml']:
-            raise Exception("Invalid format. Type garmin-backup --help for more information")
+            raise Exception(
+                "Invalid format. Type garmin-backup --help for more information"
+            )
     
     # activities parsing
     if args['--activity']:
         args['--activity'] = args['--activity'].split()
+        print('Downloading specific activities not yet implemented. Ignoring for now...')
 
     return args
 
@@ -193,7 +211,9 @@ def generate_activity_name(date: str, name:str) -> str:
     return f'{prefix}-{suffix}'
 
 
-def get_download_activities(path: str, start: datetime.date, end: datetime.date, api: Garmin) -> list[str]:
+def get_download_activities(
+    path: str, start: datetime.date, end: datetime.date, api: Garmin
+) -> list[str]:
     """return list of activity ids that need to be downloaded"""
     
     # get activity names already in disk -- put in a set to remove duplicates
@@ -209,6 +229,7 @@ def get_download_activities(path: str, start: datetime.date, end: datetime.date,
         }
         for a in garmin_activities
     ]
+    print(f"Found {len(garmin_activities)} activities between {start} and {end}.")
 
     # download activities are those that are not in disk already
     download_activities = [
@@ -216,10 +237,13 @@ def get_download_activities(path: str, start: datetime.date, end: datetime.date,
         for activity in garmin_activities
         if activity['name'] not in disk_activities
     ]
+    print(f"{len(download_activities)} activities are not in local disk.")
 
     # trunkate list if it exceeds the maximum allowed
     if len(download_activities) > MAX_ACTIVITIES:
         download_activities = download_activities[:MAX_ACTIVITIES]
+    print(f"{len(download_activities)} activities to be downloaded.")
+    print_separator()
 
     return download_activities
 
@@ -233,11 +257,14 @@ def download_activities(
     the 'id' and the 'name' for each activity.
     """
 
-    for activity in activities:
+    total = len(activities)
+    for i, activity in enumerate(activities):
+        print(f"Downloading activity {i+1} of {total}. Id: {activity['id']}")
+
         for file_format in formats:
             ext = 'zip' if file_format=="original" else file_format
             filename = f"{activity['name']}.{ext}"
-            print(f"Downloading {filename}...")
+            print(f'   Format {file_format}. Downloading {filename}...')
             match file_format:
                 case 'gpx':
                     dl_fmt = Garmin.ActivityDownloadFormat.GPX
@@ -271,10 +298,14 @@ def main() -> None:
 
     
     # initialise api
+    print_separator()
+    print('Connecting to Garmin Connect...')
     if args['--fake']:
         api = FakeGarmin()
     else:
         api = init_api(email, password, tokenstore)
+    print('Connection established for user:', api.get_full_name())
+    print_separator()
 
     # find activities to be downloaded
     os.makedirs(args['<path>'], exist_ok=True)
@@ -289,6 +320,13 @@ def main() -> None:
         args['<path>'], 
         api
     )
+    
+    # separator  from downloaded activities
+    if len(activities_to_download): 
+        print_separator()
+    
+    # final message -- copied from Garmin Connect example :)
+    print("\nDone. Be active, generate some data to fetch next time ;-) Bye!")
 
 
 if __name__ == '__main__':

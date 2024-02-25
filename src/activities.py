@@ -1,7 +1,7 @@
 import pprint
 
 
-activities = [
+ACTIVITIES = [
     {
         "activityId": 10000001,
         "activityName": "Villanueva de la Ca\u00f1ada Running",
@@ -941,5 +941,5 @@ activities = [
 ]
 
 if __name__ == '__main__':
-    pprint.pprint(activities)
-    print(len(activities))
+    pprint.pprint(ACTIVITIES)
+    print(len(ACTIVITIES))
