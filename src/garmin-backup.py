@@ -58,8 +58,7 @@ from activities import ACTIVITIES
 
 
 __version__ = 0.6
-BASE_PATH = os.path.dirname(__file__)
-TOKEN_STORE_DIR = os.path.join(BASE_PATH, "~/.garminconnect")
+TOKEN_STORE_DIR = "~/.garminconnect"
 MAX_ACTIVITIES = 100
 
 # Configure debug logging

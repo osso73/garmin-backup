@@ -80,3 +80,5 @@ python garmin-backup data  # see the usage below for all the available options
 ## License
 
 This project is using an MIT license.
+
+For the icon of the application, I've used the following image from Vectorfied: [Garmin Onboard](https://vectorified.com/).
