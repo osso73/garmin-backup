@@ -225,7 +225,7 @@ def get_download_activities(path: str, start: datetime.date, end: datetime.date,
 
 
 def download_activities(
-    activities: list[dict], formats: list[str], api:Garmin
+    activities: list[dict], formats: list[str], path: str, api:Garmin
 ) -> None:
     """
     download the activities from the list provided, and write
@@ -253,7 +253,7 @@ def download_activities(
             data = api.download_activity(
                 activity['id'], dl_fmt=dl_fmt
             )
-            fullname = os.path.join(args['<path>'], filename)
+            fullname = os.path.join(path, filename)
             with open(fullname, 'wb') as f:
                 f.write(data)
 
@@ -278,10 +278,17 @@ def main() -> None:
 
     # find activities to be downloaded
     os.makedirs(args['<path>'], exist_ok=True)
-    activities_to_download = get_download_activities(args['<path>'], args['--start'], args['--end'], api)
+    activities_to_download = get_download_activities(
+        args['<path>'], args['--start'], args['--end'], api
+    )
 
     # download activities and save to disk
-    download_activities(activities_to_download, args['--formats'])
+    download_activities(
+        activities_to_download, 
+        args['--formats'], 
+        args['<path>'], 
+        api
+    )
 
 
 if __name__ == '__main__':
