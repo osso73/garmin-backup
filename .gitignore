@@ -1,8 +1,6 @@
 # project exclusions
-data/
-.garminconnect/
-src/example_from_GarminConnect.py
 resources/
+data/
 
 
 # Byte-compiled / optimized / DLL files

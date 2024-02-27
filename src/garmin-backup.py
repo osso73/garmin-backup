@@ -23,8 +23,6 @@ Options:
                             provided, it will assume Jan 1st of that year.
   -e, --end=e_DATE          End date, in ISO format. If only the year is
                             provided, it will assume Dec 31st of that year.
-  --fake                    Use fake data, instead of connecting to Garmin.
-                            For test purposes only.
   --help                    Show this message and exit.
   --verion                  Show the version and exit.
 
@@ -54,10 +52,8 @@ from docopt import docopt
 
 from garminconnect import Garmin, GarminConnectAuthenticationError
 
-from activities import ACTIVITIES
 
-
-__version__ = 0.6
+__version__ = '0.7'
 TOKEN_STORE_DIR = "~/.garminconnect"
 MAX_ACTIVITIES = 100
 
@@ -65,40 +61,6 @@ MAX_ACTIVITIES = 100
 # logging.basicConfig(level=logging.DEBUG)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-
-class FakeGarmin:
-    """used to test without connecting to Garmin"""
-    def get_activities(self, start:int, limit:int):
-        return ACTIVITIES
-
-
-    def get_activities_by_date(self, 
-        startdate: datetime.date, enddate: datetime.date, 
-        activitytype:str=None
-    ):
-        """get activities between dates"""
-
-        idx = []
-        for i, activity in enumerate(ACTIVITIES):
-            date = datetime.datetime.fromisoformat(activity['startTimeLocal'])
-            if startdate <= date.date() <= enddate:
-                idx.append(i)
-        
-        return [ ACTIVITIES[i] for i in idx ]
-
-
-    def download_activity(self, 
-        activity_id:str, dl_fmt=Garmin.ActivityDownloadFormat.GPX
-    ):
-        """Download activity requested in requested format"""
-        return f"Activity {activity_id}: long string of characters...".encode()
-    
-
-    def get_full_name(self):
-        """Return full name of the user"""
-        return "Oriol Pujol"
-
 
 
 def print_separator():
@@ -167,9 +129,8 @@ def parse_date(date: str, date_type='start') -> datetime.date:
     
     # if it's an ISO date
     else:
-        return datetime.datetime.fromisoformat(date).date
+        return datetime.date.fromisoformat(date)
 
-    
 
 def parse_arguments(arguments: dict[str: str]) -> dict:
     """parse command line arguments, return arguments parsed"""
@@ -195,31 +156,33 @@ def parse_arguments(arguments: dict[str: str]) -> dict:
                 "Invalid format. Type garmin-backup --help for more information"
             )
     
-    # activities parsing
+    # activities parsing: transform to list of int
     if args['--activity']:
         args['--activity'] = args['--activity'].split()
-        print('Downloading specific activities not yet implemented. Ignoring for now...')
+        args['--activity'] = [ int(act_id) for act_id in args['--activity']]
 
     return args
 
 
 def generate_activity_name(date: str, name:str) -> str:
     """return name of the activity file, built from the parameters"""
-    prefix = date.replace(':', '').replace(' ', '_')[:-2]
+    start_time = datetime.datetime.fromisoformat(date)
+    prefix = start_time.strftime("%Y-%m-%d_%H%M")
     suffix = name.replace(' ', '_')
     return f'{prefix}-{suffix}'
 
 
-def get_download_activities(
+def get_downloads_by_date(
     path: str, start: datetime.date, end: datetime.date, api: Garmin
 ) -> list[str]:
-    """return list of activity ids that need to be downloaded"""
-    
+    """return list of activities (id, name) to be downloaded, by date"""
+
     # get activity names already in disk -- put in a set to remove duplicates
     files = os.listdir(path)
     disk_activities = {file.split('.')[0] for file in files}
 
     # get all activities available in garmin
+    print("Getting the list of activities from the account...")
     garmin_activities = api.get_activities_by_date(start, end)
     garmin_activities = [
         {
@@ -241,6 +204,31 @@ def get_download_activities(
     # trunkate list if it exceeds the maximum allowed
     if len(download_activities) > MAX_ACTIVITIES:
         download_activities = download_activities[:MAX_ACTIVITIES]
+        
+    print(f"{len(download_activities)} activities to be downloaded.")
+    print_separator()
+
+    return download_activities
+
+
+def get_downloads_by_id(list_of_ids, api):
+    """return list of activities (id, name) to be downloaded, by ids"""
+
+    print(f"Got {len(list_of_ids)} activities.")
+
+    download_activities = list()
+
+    for act_id in list_of_ids:
+        activity = api.get_activity_evaluation(act_id)
+        activityName = activity['activityName']
+        startTime = activity['summaryDTO']['startTimeLocal']
+        download_activities.append(
+            {
+                'name': generate_activity_name(startTime, activityName),
+                'id': act_id
+            }
+        )
+    
     print(f"{len(download_activities)} activities to be downloaded.")
     print_separator()
 
@@ -299,18 +287,20 @@ def main() -> None:
     # initialise api
     print_separator()
     print('Connecting to Garmin Connect...')
-    if args['--fake']:
-        api = FakeGarmin()
-    else:
-        api = init_api(email, password, tokenstore)
+
+    api = init_api(email, password, tokenstore)
+
     print('Connection established for user:', api.get_full_name())
     print_separator()
 
     # find activities to be downloaded
     os.makedirs(args['<path>'], exist_ok=True)
-    activities_to_download = get_download_activities(
-        args['<path>'], args['--start'], args['--end'], api
-    )
+    if args['--activity']:
+        activities_to_download = get_downloads_by_id(args['--activity'], api)
+    else:
+        activities_to_download = get_downloads_by_date(
+            args['<path>'], args['--start'], args['--end'], api
+        )
 
     # download activities and save to disk
     download_activities(
@@ -320,7 +310,7 @@ def main() -> None:
         api
     )
     
-    # separator  from downloaded activities
+    # separator  from downloaded activities (only if downloaded >0 activities)
     if len(activities_to_download): 
         print_separator()
     

@@ -7,7 +7,6 @@ build_options = {
     'packages': [], 
     'excludes': [],
     'zip_include_packages': [],
-    'bin_path_excludes': '.garminconnect'
     }
 
 base = 'console'
