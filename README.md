@@ -58,7 +58,7 @@ python garmin-backup data  # see the usage below for all the available options
     --fake                    Use fake data, instead of connecting to Garmin.
                               For test purposes only.
     --help                    Show this message and exit.
-    --verion                  Show the version and exit.
+    --version                 Show the version and exit.
 
     The username and password can also be provided through environment variables 
     USER and PASSWORD. If not provided through command line or environment 
