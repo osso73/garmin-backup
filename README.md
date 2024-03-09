@@ -56,6 +56,7 @@ python garmin-backup data  # see the usage below for all the available options
                               provided, it will assume Jan 1st of that year.
     -e, --end=e_DATE          End date, in ISO format. If only the year is
                               provided, it will assume Dec 31st of that year.
+    --current                 Download activities for current year.
     --help                    Show this message and exit.
     --version                 Show the version and exit.
 
