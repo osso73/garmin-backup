@@ -1,6 +1,7 @@
 # gamin-backup
 
-Script to backup your activities from Garmin to the local disk. It uses the API from [GaminConnect](https://github.com/cyberjunky/python-garminconnect) to authenticate, store the session credentials, and download data from Garmin site.
+Script to backup your activities from Garmin to the local disk. It uses the API from [GaminConnect](https://github.com/cyberjunky/python-garminconnect) to authenticate, store the session credentials, and download data from Garmin site. 
+
 
 **Why create this script?**
 
@@ -55,8 +56,6 @@ python garmin-backup data  # see the usage below for all the available options
                               provided, it will assume Jan 1st of that year.
     -e, --end=e_DATE          End date, in ISO format. If only the year is
                               provided, it will assume Dec 31st of that year.
-    --fake                    Use fake data, instead of connecting to Garmin.
-                              For test purposes only.
     --help                    Show this message and exit.
     --version                 Show the version and exit.
 
@@ -74,6 +73,24 @@ python garmin-backup data  # see the usage below for all the available options
     the Garmin Connect page, and getting banned. If you have more than 100 
     activities to download, you can just run the program again.
 
+    The activities are saved on disk using the following name convention: 
+    `<ISO date>_HHMM-<activity name>`
+
+
+Examples:
+```bash
+# download all activities from 2020 to now, format gpx, save to folder ./data
+garmin-backup data -s 2020
+
+# download activities for current year, format csv and original
+garmin-backup data/2024 --current -f "csv original"
+
+# download all activities for year 2023, in gpx
+garmin-backup data/2023 -s 2023 -e 2023
+
+# download activities for month of July 2023, in gpx and original
+garmin-backup data/2023/07 -s=2023-07-01 -e=2023-07-31 -f "gpx original"
+```
 
 
 ## License

@@ -23,8 +23,9 @@ Options:
                             provided, it will assume Jan 1st of that year.
   -e, --end=e_DATE          End date, in ISO format. If only the year is
                             provided, it will assume Dec 31st of that year.
+  --current                 Download activities for current year.
   --help                    Show this message and exit.
-  --verion                  Show the version and exit.
+  --version                 Show the version and exit.
 
 The username and password can also be provided through environment variables 
 USER and PASSWORD. If not provided through command line or environment 
@@ -39,6 +40,9 @@ from the beginning until today.
 There is a limit of 100 activities at a time, in order to avoid overloading
 the Garmin Connect page, and getting banned. If you have more than 100 
 activities to download, you can just run the program again.
+
+The activities are saved on disk using the following name convention: 
+`<ISO date>_HHMM-<activity name>`
 """
 
 import datetime
@@ -135,12 +139,18 @@ def parse_date(date: str, date_type='start') -> datetime.date:
 def parse_arguments(arguments: dict[str: str]) -> dict:
     """parse command line arguments, return arguments parsed"""
     args = arguments.copy()
+    today = datetime.date.today()
+
+    # if --current, override the start/end dates to match current year
+    if args['--current']:
+        args['--start'] = str(today.year)
+        args['--end'] = None
 
     # dates parsing
     if args['--end']:
         args['--end'] = parse_date(args['--end'], date_type='end')
     else:
-        args['--end'] = datetime.date.today()  # latest date possible
+        args['--end'] = today  # latest date possible
 
     if args['--start']:
         args['--start'] = parse_date(args['--start'], date_type='start')
