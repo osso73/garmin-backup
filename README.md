@@ -57,6 +57,9 @@ python garmin-backup data  # see the usage below for all the available options
     -e, --end=e_DATE          End date, in ISO format. If only the year is
                               provided, it will assume Dec 31st of that year.
     --current                 Download activities for current year.
+    -t, --type=TYPE           Get only activities of type TYPE. Possible values 
+                              are [cycling, running, swimming,multi_sport, 
+                              fitness_equipment, hiking, walking, other].
     --help                    Show this message and exit.
     --version                 Show the version and exit.
 

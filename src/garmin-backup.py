@@ -24,7 +24,10 @@ Options:
   -e, --end=e_DATE          End date, in ISO format. If only the year is
                             provided, it will assume Dec 31st of that year.
   --current                 Download activities for current year.
-  --help                    Show this message and exit.
+  -t, --type=TYPE           Get only activities of type TYPE. Possible values 
+                            are [cycling, running, swimming,multi_sport, 
+                            fitness_equipment, hiking, walking, other].
+  --help                    Show this message and exit
   --version                 Show the version and exit.
 
 The username and password can also be provided through environment variables 
@@ -57,7 +60,7 @@ from docopt import docopt
 from garminconnect import Garmin, GarminConnectAuthenticationError
 
 
-__version__ = '0.7'
+__version__ = '0.8'
 TOKEN_STORE_DIR = "~/.garminconnect"
 MAX_ACTIVITIES = 100
 
@@ -165,6 +168,14 @@ def parse_arguments(arguments: dict[str: str]) -> dict:
             raise Exception(
                 "Invalid format. Type garmin-backup --help for more information"
             )
+
+    # type parsing - ensure type is valid
+    if args['--type']:
+        if args['--type'] not in ['cycling', 'running', 'swimming', 
+                'multi_sport', 'fitness_equipment', 'hiking, walking', 'other']:
+            raise Exception(
+                "Invalid type. Type garmin-backup --help for more information"
+            )
     
     # activities parsing: transform to list of int
     if args['--activity']:
@@ -183,7 +194,11 @@ def generate_activity_name(date: str, name:str) -> str:
 
 
 def get_downloads_by_date(
-    path: str, start: datetime.date, end: datetime.date, api: Garmin
+    path: str, 
+    start: datetime.date, 
+    end: datetime.date, 
+    type_a: str, 
+    api: Garmin
 ) -> list[str]:
     """return list of activities (id, name) to be downloaded, by date"""
 
@@ -193,7 +208,7 @@ def get_downloads_by_date(
 
     # get all activities available in garmin
     print("Getting the list of activities from the account...")
-    garmin_activities = api.get_activities_by_date(start, end)
+    garmin_activities = api.get_activities_by_date(start, end, type_a)
     garmin_activities = [
         {
             'name': generate_activity_name(a["startTimeLocal"], a["activityName"]),
@@ -309,7 +324,7 @@ def main() -> None:
         activities_to_download = get_downloads_by_id(args['--activity'], api)
     else:
         activities_to_download = get_downloads_by_date(
-            args['<path>'], args['--start'], args['--end'], api
+            args['<path>'], args['--start'], args['--end'], args['--type'], api
         )
 
     # download activities and save to disk
