@@ -1,11 +1,11 @@
-# gamin-backup
+# garmin-backup
 
-Script to backup your activities from Garmin to the local disk. It uses the API from [GaminConnect](https://github.com/cyberjunky/python-garminconnect) to authenticate, store the session credentials, and download data from Garmin site. 
+Script to backup your activities from Garmin to the local disk. It uses the API from [GarminConnect](https://github.com/cyberjunky/python-garminconnect) to authenticate, store the session credentials, and download data from Garmin site. 
 
 
 **Why create this script?**
 
-I am implementing a functionality similar to other available tools, such as [garminexport](https://github.com/petergardfjall/garminexport) or [garpy](https://github.com/felipeam86/garpy), both of which I have been using until Garmin Connect changed the authentication method and these scripts have stopped working. This is why I have implemented ``garmin-backup``, using the [GaminConnect](https://github.com/cyberjunky/python-garminconnect) API that works now. Besides that, I've added a functionality that I missed from the other two scripts: the limitation on dates. This allows me to store my data in different folders per year, rather than having all activities in a single folder, which as becoming a bit too many over the years.
+I am implementing a functionality similar to other available tools, such as [garminexport](https://github.com/petergardfjall/garminexport) or [garpy](https://github.com/felipeam86/garpy), both of which I have been using until Garmin Connect changed the authentication method and these scripts have stopped working. This is why I have implemented ``garmin-backup``, using the [GarminConnect](https://github.com/cyberjunky/python-garminconnect) API that works now. Besides that, I've added a functionality that I missed from the other two scripts: the limitation on dates. This allows me to store my data in different folders per year, rather than having all activities in a single folder, which as becoming a bit too many over the years.
 
 Note this is just using a very limited subset of GarminConnect, only focused at downloading the activity data for now. Maybe later other functions will be added, but I'm not really interested in extracting other data.
 
@@ -60,6 +60,7 @@ python garmin-backup data  # see the usage below for all the available options
     -t, --type=TYPE           Get only activities of type TYPE. Possible values 
                               are [cycling, running, swimming,multi_sport, 
                               fitness_equipment, hiking, walking, other].
+    -v, --verbose=LEVEL       Level of verbosity, from 1 to 3 [default: 1].
     --help                    Show this message and exit.
     --version                 Show the version and exit.
 

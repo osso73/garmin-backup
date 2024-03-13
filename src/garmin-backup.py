@@ -27,6 +27,7 @@ Options:
   -t, --type=TYPE           Get only activities of type TYPE. Possible values 
                             are [cycling, running, swimming,multi_sport, 
                             fitness_equipment, hiking, walking, other].
+  -v, --verbose=LEVEL       Level of verbosity, from 1 to 3 [default: 1].
   --help                    Show this message and exit
   --version                 Show the version and exit.
 
@@ -60,7 +61,7 @@ from docopt import docopt
 from garminconnect import Garmin, GarminConnectAuthenticationError
 
 
-__version__ = '0.8'
+__version__ = '1.0'
 TOKEN_STORE_DIR = "~/.garminconnect"
 MAX_ACTIVITIES = 100
 
@@ -181,6 +182,15 @@ def parse_arguments(arguments: dict[str: str]) -> dict:
     if args['--activity']:
         args['--activity'] = args['--activity'].split()
         args['--activity'] = [ int(act_id) for act_id in args['--activity']]
+    
+    # verbosity parsing: if wrong value, give it the default
+    try:
+        args['--verbose'] = int(args['--verbose'])
+    except ValueError:
+        args['--verbose'] = 1
+    
+    if args['--verbose'] not in [1, 2, 3]:
+        args['--verbose'] = 1
 
     return args
 
@@ -241,27 +251,39 @@ def get_downloads_by_id(list_of_ids, api):
 
     print(f"Got {len(list_of_ids)} activities.")
 
-    download_activities = list()
+    activities_to_download = list()
 
     for act_id in list_of_ids:
         activity = api.get_activity_evaluation(act_id)
         activityName = activity['activityName']
         startTime = activity['summaryDTO']['startTimeLocal']
-        download_activities.append(
+        activities_to_download.append(
             {
                 'name': generate_activity_name(startTime, activityName),
                 'id': act_id
             }
         )
     
-    print(f"{len(download_activities)} activities to be downloaded.")
+    print(f"{len(activities_to_download)} activities to be downloaded.")
     print_separator()
 
-    return download_activities
+    return activities_to_download
 
+
+def print_progress_bar(
+    iteration: int, total: int, prefix: str='', suffix: str='', length: int=30, fill: str='█'
+) -> None:
+    """Print progress bar for downloading activities"""
+
+    percent = ("{0:.1f}").format(100 * (iteration / float(total)))
+    filled_length = int(length * iteration // total)
+    bar = fill * filled_length + '·' * (length - filled_length)
+    print(f'\r{prefix} |{bar}| {percent}% {suffix}', end='\r')
+    if iteration == total:
+        print('')  # adding a line return
 
 def download_activities(
-    activities: list[dict], formats: list[str], path: str, api:Garmin
+    activities: list[dict], formats: list[str], path: str, verbose: int, api:Garmin
 ) -> None:
     """
     download the activities from the list provided, and write
@@ -271,12 +293,16 @@ def download_activities(
 
     total = len(activities)
     for i, activity in enumerate(activities):
-        print(f"Downloading activity {i+1} of {total}. Id: {activity['id']}")
+        if verbose == 1:
+            print_progress_bar(i+1, total, prefix='Progress:', suffix='Complete')
+        else:
+            print(f"Downloading activity {i+1} of {total}. Id: {activity['id']}")
 
         for file_format in formats:
             ext = 'zip' if file_format=="original" else file_format
             filename = f"{activity['name']}.{ext}"
-            print(f'   Format {file_format}. Downloading {filename}...')
+            if verbose == 3:
+                print(f'   Format {file_format}. Downloading {filename}...')
             match file_format:
                 case 'gpx':
                     dl_fmt = Garmin.ActivityDownloadFormat.GPX
@@ -289,13 +315,10 @@ def download_activities(
                 case 'original':
                     dl_fmt = Garmin.ActivityDownloadFormat.ORIGINAL
 
-            data = api.download_activity(
-                activity['id'], dl_fmt=dl_fmt
-            )
+            data = api.download_activity(activity['id'], dl_fmt=dl_fmt)
             fullname = os.path.join(path, filename)
             with open(fullname, 'wb') as f:
                 f.write(data)
-
 
 
 def main() -> None:
@@ -332,6 +355,7 @@ def main() -> None:
         activities_to_download, 
         args['--formats'], 
         args['<path>'], 
+        args['--verbose'], 
         api
     )
     
