@@ -79,7 +79,7 @@ python garmin-backup data  # see the usage below for all the available options
     activities to download, you can just run the program again.
 
     The activities are saved on disk using the following name convention: 
-    `<ISO date>_HHMM-<activity name>`
+    `<ISO date>_HH.MM_<activity id>-<activity name>`.
 
 
 Examples:

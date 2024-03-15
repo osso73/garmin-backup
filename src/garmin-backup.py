@@ -46,7 +46,7 @@ the Garmin Connect page, and getting banned. If you have more than 100
 activities to download, you can just run the program again.
 
 The activities are saved on disk using the following name convention: 
-`<ISO date>_HHMM-<activity name>`
+`<ISO date>_HH.MM_<activity id>-<activity name>`.
 """
 
 import datetime
@@ -61,7 +61,7 @@ from docopt import docopt
 from garminconnect import Garmin, GarminConnectAuthenticationError
 
 
-__version__ = '1.0'
+__version__ = '1.1'
 TOKEN_STORE_DIR = "~/.garminconnect"
 MAX_ACTIVITIES = 100
 
@@ -163,9 +163,9 @@ def parse_arguments(arguments: dict[str: str]) -> dict:
     
 
     # format parsing
-    args['--formats'] = args['--formats'].lower().split()
+    args['--formats'] = args['--formats'].upper().split()
     for format in args['--formats']:
-        if format not in ['original', 'gpx', 'csv', 'tcx', 'kml']:
+        if format not in ['ORIGINAL', 'GPX', 'CSV', 'TCX', 'KML']:
             raise Exception(
                 "Invalid format. Type garmin-backup --help for more information"
             )
@@ -178,10 +178,10 @@ def parse_arguments(arguments: dict[str: str]) -> dict:
                 "Invalid type. Type garmin-backup --help for more information"
             )
     
-    # activities parsing: transform to list of int
+    # activities parsing: transform to list
     if args['--activity']:
         args['--activity'] = args['--activity'].split()
-        args['--activity'] = [ int(act_id) for act_id in args['--activity']]
+        # args['--activity'] = [ int(act_id) for act_id in args['--activity']]
     
     # verbosity parsing: if wrong value, give it the default
     try:
@@ -195,12 +195,12 @@ def parse_arguments(arguments: dict[str: str]) -> dict:
     return args
 
 
-def generate_activity_name(date: str, name:str) -> str:
+def generate_activity_name(date: str, name:str, act_id:str) -> str:
     """return name of the activity file, built from the parameters"""
     start_time = datetime.datetime.fromisoformat(date)
-    prefix = start_time.strftime("%Y-%m-%d_%H%M")
+    prefix = start_time.strftime("%Y-%m-%d_%H.%M")
     suffix = name.replace(' ', '_')
-    return f'{prefix}-{suffix}'
+    return f'{prefix}_{act_id}-{suffix}'
 
 
 def get_downloads_by_date(
@@ -214,14 +214,14 @@ def get_downloads_by_date(
 
     # get activity names already in disk -- put in a set to remove duplicates
     files = os.listdir(path)
-    disk_activities = {file.split('.')[0] for file in files}
+    disk_activities = {os.path.splitext(file)[0] for file in files}
 
     # get all activities available in garmin
     print("Getting the list of activities from the account...")
     garmin_activities = api.get_activities_by_date(start, end, type_a)
     garmin_activities = [
         {
-            'name': generate_activity_name(a["startTimeLocal"], a["activityName"]),
+            'name': generate_activity_name(a["startTimeLocal"], a["activityName"], a["activityId"]),
             'id': a["activityId"]
         }
         for a in garmin_activities
@@ -259,7 +259,7 @@ def get_downloads_by_id(list_of_ids, api):
         startTime = activity['summaryDTO']['startTimeLocal']
         activities_to_download.append(
             {
-                'name': generate_activity_name(startTime, activityName),
+                'name': generate_activity_name(startTime, activityName, act_id),
                 'id': act_id
             }
         )
@@ -299,22 +299,12 @@ def download_activities(
             print(f"Downloading activity {i+1} of {total}. Id: {activity['id']}")
 
         for file_format in formats:
-            ext = 'zip' if file_format=="original" else file_format
+            ext = 'zip' if file_format=="ORIGINAL" else file_format.lower()
             filename = f"{activity['name']}.{ext}"
             if verbose == 3:
                 print(f'   Format {file_format}. Downloading {filename}...')
-            match file_format:
-                case 'gpx':
-                    dl_fmt = Garmin.ActivityDownloadFormat.GPX
-                case 'tcx':
-                    dl_fmt = Garmin.ActivityDownloadFormat.TCX
-                case 'kml':
-                    dl_fmt = Garmin.ActivityDownloadFormat.KML
-                case 'csv':
-                    dl_fmt = Garmin.ActivityDownloadFormat.CSV
-                case 'original':
-                    dl_fmt = Garmin.ActivityDownloadFormat.ORIGINAL
 
+            dl_fmt = getattr(Garmin.ActivityDownloadFormat, file_format)
             data = api.download_activity(activity['id'], dl_fmt=dl_fmt)
             fullname = os.path.join(path, filename)
             with open(fullname, 'wb') as f:
