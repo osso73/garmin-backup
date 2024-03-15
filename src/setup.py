@@ -20,7 +20,7 @@ executables = [
 ]
 
 setup(name='garmin-backup',
-      version = '0.6',
+      version = '1.1',
       description = 'Some scripts to enhance your Windows experience',
       options = {'build_exe': build_options},
       executables = executables)
