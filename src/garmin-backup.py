@@ -3,50 +3,6 @@
 """
 gamin-backup is a script to download your activities from 
 Garmin Connect, so you can keep a local copy in your computer.
-
-Usage: garmin-backup [options] <path>
-
-  <path>                    Activity folder to store your activities.
-
-
-Options:
-  -f, --formats=FORMAT      Which formats to download [default: gpx].
-                            Choose from the available options: 
-                            original|gpx|csv|tcx|kml. You can have more than 
-                            one format by separating them by spaces, and in "".
-  -u, --username=USERNAME   Username of your Garmin account
-  -p, --password=PASSWORD   Password of your Garmin account
-  -a, --activity=ID         Activity ID. Download only that activity, even 
-                            if it has already been downloaded. Yoy can add
-                            several IDs separated by space, and in "".
-  -s, --start=S_DATE        Start date, in ISO format. If only the year is
-                            provided, it will assume Jan 1st of that year.
-  -e, --end=e_DATE          End date, in ISO format. If only the year is
-                            provided, it will assume Dec 31st of that year.
-  --current                 Download activities for current year.
-  -t, --type=TYPE           Get only activities of type TYPE. Possible values 
-                            are [cycling, running, swimming,multi_sport, 
-                            fitness_equipment, hiking, walking, other].
-  -v, --verbose=LEVEL       Level of verbosity, from 1 to 3 [default: 1].
-  --help                    Show this message and exit
-  --version                 Show the version and exit.
-
-The username and password can also be provided through environment variables 
-USER and PASSWORD. If not provided through command line or environment 
-variables, the program will prompt for this information the first time. The 
-credential information will then be stored in .garminconnect folder under user
-profile, and re-used for the future, until they need to be refreshed.
-
-All activities between S_DATE and E_DATE that are not already present in <path> 
-will be downloaded. If no dates are provided, it will assume all activities, 
-from the beginning until today.
-
-There is a limit of 100 activities at a time, in order to avoid overloading
-the Garmin Connect page, and getting banned. If you have more than 100 
-activities to download, you can just run the program again.
-
-The activities are saved on disk using the following name convention: 
-`<ISO date>_HH.MM_<activity id>-<activity name>`.
 """
 
 import datetime
@@ -56,14 +12,14 @@ import os
 from getpass import getpass
 import requests
 from garth.exc import GarthHTTPError
-from docopt import docopt
+import click
 
 from garminconnect import Garmin, GarminConnectAuthenticationError
 
 
-__version__ = '1.1'
+__version__ = '2.0'
 TOKEN_STORE_DIR = "~/.garminconnect"
-MAX_ACTIVITIES = 100
+MAX_ACTIVITIES = 10
 
 # Configure debug logging
 # logging.basicConfig(level=logging.DEBUG)
@@ -71,12 +27,12 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def print_separator():
+def print_separator() -> None:
     """print line in terminal, to separate sections"""
     print('-' * 50)
 
 
-def get_credentials():
+def get_credentials() -> tuple[str, str]:
     """Get user credentials."""
 
     user = input("Login user: ")
@@ -120,79 +76,6 @@ def init_api(user: str, password: str, tokenstore: str) -> Garmin:
             return None
 
     return garmin
-
-
-def parse_date(date: str, date_type='start') -> datetime.date:
-    """
-    check if a year is provided, or a date, and 
-    transform it to datetime.date
-    """
-    # if it's a year
-    if len(date) == 4:
-        year = int(date)
-        if date_type == 'start':
-            return datetime.date(year, 1, 1)
-        else:
-            return datetime.date(year, 12, 31)
-    
-    # if it's an ISO date
-    else:
-        return datetime.date.fromisoformat(date)
-
-
-def parse_arguments(arguments: dict[str: str]) -> dict:
-    """parse command line arguments, return arguments parsed"""
-    args = arguments.copy()
-    today = datetime.date.today()
-
-    # if --current, override the start/end dates to match current year
-    if args['--current']:
-        args['--start'] = str(today.year)
-        args['--end'] = None
-
-    # dates parsing
-    if args['--end']:
-        args['--end'] = parse_date(args['--end'], date_type='end')
-    else:
-        args['--end'] = today  # latest date possible
-
-    if args['--start']:
-        args['--start'] = parse_date(args['--start'], date_type='start')
-    else:
-        args['--start'] = datetime.date(1900, 1, 1)  # just a very early date
-    
-
-    # format parsing
-    args['--formats'] = args['--formats'].upper().split()
-    for format in args['--formats']:
-        if format not in ['ORIGINAL', 'GPX', 'CSV', 'TCX', 'KML']:
-            raise Exception(
-                "Invalid format. Type garmin-backup --help for more information"
-            )
-
-    # type parsing - ensure type is valid
-    if args['--type']:
-        if args['--type'] not in ['cycling', 'running', 'swimming', 
-                'multi_sport', 'fitness_equipment', 'hiking, walking', 'other']:
-            raise Exception(
-                "Invalid type. Type garmin-backup --help for more information"
-            )
-    
-    # activities parsing: transform to list
-    if args['--activity']:
-        args['--activity'] = args['--activity'].split()
-        # args['--activity'] = [ int(act_id) for act_id in args['--activity']]
-    
-    # verbosity parsing: if wrong value, give it the default
-    try:
-        args['--verbose'] = int(args['--verbose'])
-    except ValueError:
-        args['--verbose'] = 1
-    
-    if args['--verbose'] not in [1, 2, 3]:
-        args['--verbose'] = 1
-
-    return args
 
 
 def generate_activity_name(date: str, name:str, act_id:str) -> str:
@@ -246,7 +129,7 @@ def get_downloads_by_date(
     return download_activities
 
 
-def get_downloads_by_id(list_of_ids, api):
+def get_downloads_by_id(list_of_ids: tuple[str], api: Garmin) -> list[str]:
     """return list of activities (id, name) to be downloaded, by ids"""
 
     print(f"Got {len(list_of_ids)} activities.")
@@ -283,7 +166,7 @@ def print_progress_bar(
         print('')  # adding a line return
 
 def download_activities(
-    activities: list[dict], formats: list[str], path: str, verbose: int, api:Garmin
+    activities: list[dict], formats: list[str], path: str, verbose: int, api: Garmin
 ) -> None:
     """
     download the activities from the list provided, and write
@@ -311,16 +194,120 @@ def download_activities(
                 f.write(data)
 
 
-def main() -> None:
-    # get arguments from command line
-    raw_arguments = docopt(__doc__, version=f'garmin-backup {__version__}')
-    args = parse_arguments(raw_arguments)
+class DateOrYear(click.ParamType):
+    """Custom parameter type for date or year"""
+    name = "date_or_year"
+
+    def __init__(self, is_start_date=True):
+        self.is_start_date = is_start_date
+
+    def convert(self, value, param, ctx):
+        # If value is already a datetime.date, return it as-is (no conversion needed
+        if isinstance(value, datetime.date):
+            return value
+        try:
+            # Try parsing as full ISO date
+            return datetime.date.fromisoformat(value)
+        except ValueError:
+            try:
+                # Try parsing as just a year
+                year = int(value)
+                if 1000 <= year <= 9999:  # Adjust year range as needed
+                    if self.is_start_date:
+                        return datetime.date(year, 1, 1)  # January 1st for start date
+                    else:
+                        return datetime.date(year, 12, 31)  # December 31st for end date
+                else:
+                    self.fail(f"Year {year} is out of range", param, ctx)
+            except ValueError:
+                self.fail(f"{value} is not a valid ISO date or year", param, ctx)
+
+@click.command(epilog="""
+The username and password can also be provided through environment variables 
+USER and PASSWORD. If not provided through command line or environment 
+variables, the program will prompt for this information the first time. The 
+credential information will then be stored in .garminconnect folder under user
+profile, and re-used for the future, until they need to be refreshed.
+
+All activities between S_DATE and E_DATE that are not already present in <path> 
+will be downloaded. If no dates are provided, it will assume all activities, 
+from the beginning until today.
+
+There is a limit of 100 activities at a time, in order to avoid overloading
+the Garmin Connect page, and getting banned. If you have more than 100 
+activities to download, you can just run the program again.
+
+The activities are saved on disk using the following name convention: 
+`<ISO date>_HH.MM_<activity id>-<activity name>`.
+""")
+@click.argument("path", type=click.Path())
+@click.option('-f', '--formats', 
+    default=['GPX'], 
+    type=click.Choice(['ORIGINAL', 'GPX', 'CSV', 'TCX', 'KML']), 
+    multiple=True, 
+    help='Which formats to download [default: GPX]. For more than one type, \
+you can enter the option several times.'
+    )
+@click.option('-u', '--username', 
+    help='Username of your Garmin account. Can also be passed as USER \
+environment variable.'
+    )
+@click.option('-p', '--password', 
+    help='Password of your Garmin account. Can also be passed as PASSWORD \
+environment variable.'
+    )
+@click.option('-a', '--activity', 
+    multiple=True, 
+    help='Activity ID. Download only that activity, even if it has already \
+been downloaded. Can be entered multiple times.'
+    )
+@click.option('-s', '--start', 
+    type=DateOrYear(is_start_date=True), 
+    default=datetime.date(1900, 1, 1), 
+    help='Start date, in ISO format. If only the year is provided, it will \
+assume Jan 1st of that year.'
+    )
+@click.option('-e', '--end', 
+    type=DateOrYear(is_start_date=False), 
+    default=datetime.date.today(), 
+    help='End date, in ISO format. If only the year is provided, it will \
+assume Dec 31st of that year.'
+    )
+@click.option('--current', 
+    is_flag=True, 
+    help='Download activities for current year.'
+    )
+@click.option('-t', '--act_type', 
+    type=click.Choice(['cycling', 'running', 'swimming', 'multi_sport', 
+                    'fitness_equipment', 'hiking', 'walking', 'other']), 
+    multiple=True, help='Get only activities of type TYPE.'
+    )
+@click.option('-v', '--verbose', 
+    type=click.IntRange(1, 3), 
+    default=1, 
+    help='Level of verbosity.'
+    )
+@click.version_option(version=__version__)
+def main(**kwargs) -> None:
+    """
+    gamin-backup is a script to download your activities from 
+    Garmin Connect, so you can keep a local copy in your computer.
+
+    It will download the activities on the PATH provided.
+    """
+    # if --current, override the start/end dates to match current year
+    if kwargs['current']:
+        today = datetime.date.today()
+        kwargs['start'] = datetime.date(today.year, 1, 1)
+        kwargs['end'] = today
+
+    for key, value in kwargs.items():
+        print(f"{key}: {value}")
 
     # Load environment variables if defined
-    email = args['--username'] or os.getenv("USER")
-    password = args['--password'] or os.getenv("PASSWORD")
+    email = kwargs['username'] or os.getenv("USER")
+    password = kwargs['password'] or os.getenv("PASSWORD")
     tokenstore = os.getenv("GARMINTOKENS") or TOKEN_STORE_DIR
-
     
     # initialise api
     print_separator()
@@ -332,20 +319,20 @@ def main() -> None:
     print_separator()
 
     # find activities to be downloaded
-    os.makedirs(args['<path>'], exist_ok=True)
-    if args['--activity']:
-        activities_to_download = get_downloads_by_id(args['--activity'], api)
+    os.makedirs(kwargs['path'], exist_ok=True)
+    if kwargs['activity']:
+        activities_to_download = get_downloads_by_id(kwargs['activity'], api)
     else:
         activities_to_download = get_downloads_by_date(
-            args['<path>'], args['--start'], args['--end'], args['--type'], api
+            kwargs['path'], kwargs['start'], kwargs['end'], kwargs['act_type'], api
         )
 
     # download activities and save to disk
     download_activities(
         activities_to_download, 
-        args['--formats'], 
-        args['<path>'], 
-        args['--verbose'], 
+        kwargs['formats'], 
+        kwargs['path'], 
+        kwargs['verbose'], 
         api
     )
     
