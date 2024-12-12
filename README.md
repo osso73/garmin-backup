@@ -34,52 +34,55 @@ python garmin-backup data  # see the usage below for all the available options
 
 ## Usage
 
-    gamin-backup is a script to download your activities from 
-    Garmin Connect, so you can keep a local copy in your computer.
+    Usage: garmin-backup.py [OPTIONS] PATH
 
-    Usage: garmin-backup [options] <path>
+    gamin-backup is a script to download your activities from  Garmin Connect,
+    so you can keep a local copy in your computer.
 
-    <path>                    Activity folder to store your activities.
-
+    It will download the activities on the PATH provided.
 
     Options:
-    -f, --formats=FORMAT      Which formats to download [default: gpx].
-                              Choose from the available options: 
-                              original|gpx|csv|tcx|kml. You can have more than 
-                              one format by separating them by spaces, and in "".
-    -u, --username=USERNAME   Username of your Garmin account
-    -p, --password=PASSWORD   Password of your Garmin account
-    -a, --activity=ID         Activity ID. Download only that activity, even 
-                              if it has already been downloaded. Yoy can add
-                              several IDs separated by space, and in "".
-    -s, --start=S_DATE        Start date, in ISO format. If only the year is
-                              provided, it will assume Jan 1st of that year.
-    -e, --end=e_DATE          End date, in ISO format. If only the year is
-                              provided, it will assume Dec 31st of that year.
-    --current                 Download activities for current year.
-    -t, --type=TYPE           Get only activities of type TYPE. Possible values 
-                              are [cycling, running, swimming,multi_sport, 
-                              fitness_equipment, hiking, walking, other].
-    -v, --verbose=LEVEL       Level of verbosity, from 1 to 3 [default: 1].
-    --help                    Show this message and exit.
-    --version                 Show the version and exit.
+    -f, --formats [ORIGINAL|GPX|CSV|TCX|KML]
+                                    Which formats to download [default: GPX].
+                                    For more than one type, you can enter the
+                                    option several times.
+    -u, --username TEXT             Username of your Garmin account. Can also be
+                                    passed as USER environment variable.
+    -p, --password TEXT             Password of your Garmin account. Can also be
+                                    passed as PASSWORD environment variable.
+    -a, --activity TEXT             Activity ID. Download only that activity,
+                                    even if it has already been downloaded. Can
+                                    be entered multiple times.
+    -s, --start DATE_OR_YEAR        Start date, in ISO format. If only the year
+                                    is provided, it will assume Jan 1st of that
+                                    year.
+    -e, --end DATE_OR_YEAR          End date, in ISO format. If only the year is
+                                    provided, it will assume Dec 31st of that
+                                    year.
+    --current                       Download activities for current year.
+    -t, --act_type [cycling|running|swimming|multi_sport|fitness_equipment|hiking|walking|other]
+                                    Get only activities of type TYPE.
+    -v, --verbose INTEGER RANGE     Level of verbosity.  [1<=x<=3]
+    --version                       Show the version and exit.
+    --help                          Show this message and exit.
 
-    The username and password can also be provided through environment variables 
-    USER and PASSWORD. If not provided through command line or environment 
-    variables, the program will prompt for this information the first time. The 
-    credential information will then be stored in .garminconnect folder under user
-    profile, and re-used for the future, until they need to be refreshed.
+    The username and password can also be provided through environment variables
+    USER and PASSWORD. If not provided through command line or environment
+    variables, the program will prompt for this information the first time. The
+    credential information will then be stored in .garminconnect folder under
+    user profile, and re-used for the future, until they need to be refreshed.
 
-    All activities between S_DATE and E_DATE that are not already present in <path> 
-    will be downloaded. If no dates are provided, it will assume all activities, 
-    from the beginning until today.
+    All activities between S_DATE and E_DATE that are not already present in
+    <path>  will be downloaded. If no dates are provided, it will assume all
+    activities,  from the beginning until today.
 
     There is a limit of 100 activities at a time, in order to avoid overloading
-    the Garmin Connect page, and getting banned. If you have more than 100 
+    the Garmin Connect page, and getting banned. If you have more than 100
     activities to download, you can just run the program again.
 
-    The activities are saved on disk using the following name convention: 
-    `<ISO date>_HH.MM_<activity id>-<activity name>`.
+    The activities are saved on disk using the following name convention:  `<ISO
+    date>_HH.MM_<activity id>-<activity name>`.
+
 
 
 Examples:
@@ -88,13 +91,13 @@ Examples:
 garmin-backup data -s 2020
 
 # download activities for current year, format csv and original
-garmin-backup data/2024 --current -f "csv original"
+garmin-backup data/2024 --current -f CSV -f ORIGINAL
 
 # download all activities for year 2023, in gpx
 garmin-backup data/2023 -s 2023 -e 2023
 
 # download activities for month of July 2023, in gpx and original
-garmin-backup data/2023/07 -s=2023-07-01 -e=2023-07-31 -f "gpx original"
+garmin-backup data/2023/07 -s=2023-07-01 -e=2023-07-31 -f GPX -f ORIGINAL
 ```
 
 
