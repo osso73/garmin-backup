@@ -4,10 +4,19 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). For the version numbers, I just use a simple 2-digit, for major and minor changes. I add a letter in the case I create a new version fixing only bugs.
 
-Each version has its corresponding apk under the folder `releases`.
+Each version has its corresponding executable under folder `releases`.
 
 
-## v2.0 -  2024-11-10
+## v2.1 - 2024-12-12
+
+Update of garminconnect library, following a change in Garmin Connect API.
+
+
+### Changed
+- Update of library garminconnect, as per iss. #9.
+
+
+## v2.0 - 2024-11-10
 
 Changed command line parser to click. This results in some changes in the way parameters are provided in the command line, therefore requiring a major versio change.
 

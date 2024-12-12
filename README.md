@@ -97,7 +97,7 @@ garmin-backup data/2024 --current -f CSV -f ORIGINAL
 garmin-backup data/2023 -s 2023 -e 2023
 
 # download activities for month of July 2023, in gpx and original
-garmin-backup data/2023/07 -s=2023-07-01 -e=2023-07-31 -f GPX -f ORIGINAL
+garmin-backup data/2023/07 -s 2023-07-01 -e 2023-07-31 -f GPX -f ORIGINAL
 ```
 
 

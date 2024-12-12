@@ -19,7 +19,7 @@ from garminconnect import Garmin, GarminConnectAuthenticationError
 
 __version__ = '2.0'
 TOKEN_STORE_DIR = "~/.garminconnect"
-MAX_ACTIVITIES = 10
+MAX_ACTIVITIES = 100
 
 # Configure debug logging
 # logging.basicConfig(level=logging.DEBUG)
@@ -300,9 +300,6 @@ def main(**kwargs) -> None:
         today = datetime.date.today()
         kwargs['start'] = datetime.date(today.year, 1, 1)
         kwargs['end'] = today
-
-    for key, value in kwargs.items():
-        print(f"{key}: {value}")
 
     # Load environment variables if defined
     email = kwargs['username'] or os.getenv("USER")
