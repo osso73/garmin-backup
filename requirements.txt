@@ -1,3 +1,2 @@
 garminconnect
-cx-freeze
 click
