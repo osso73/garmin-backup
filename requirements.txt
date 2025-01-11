@@ -1,4 +1,4 @@
 garminconnect
 cx-freeze
 click
-sanitize
+sanitize_filename
