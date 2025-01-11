@@ -1,3 +1,4 @@
 garminconnect
 cx-freeze
 click
+sanitize
