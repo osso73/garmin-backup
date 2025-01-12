@@ -105,7 +105,11 @@ def get_downloads_by_date(
     garmin_activities = api.get_activities_by_date(start, end, type_a)
     garmin_activities = [
         {
-            'name': generate_activity_name(a["startTimeLocal"], a["activityName"], a["activityId"]),
+            'name': generate_activity_name(
+                a["startTimeLocal"],
+                a.get("activityName", "Untitled"), # some activities have no name
+                a["activityId"]
+            ),
             'id': a["activityId"]
         }
         for a in garmin_activities
