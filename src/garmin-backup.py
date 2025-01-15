@@ -16,6 +16,7 @@ import click
 
 from garminconnect import Garmin, GarminConnectAuthenticationError
 
+from sanitize_filename import sanitize
 
 __version__ = '2.0'
 TOKEN_STORE_DIR = "~/.garminconnect"
@@ -82,7 +83,7 @@ def generate_activity_name(date: str, name:str, act_id:str) -> str:
     """return name of the activity file, built from the parameters"""
     start_time = datetime.datetime.fromisoformat(date)
     prefix = start_time.strftime("%Y-%m-%d_%H.%M")
-    suffix = name.replace(' ', '_')
+    suffix = sanitize(name.replace(' ', '_'))
     return f'{prefix}_{act_id}-{suffix}'
 
 
@@ -104,7 +105,11 @@ def get_downloads_by_date(
     garmin_activities = api.get_activities_by_date(start, end, type_a)
     garmin_activities = [
         {
-            'name': generate_activity_name(a["startTimeLocal"], a["activityName"], a["activityId"]),
+            'name': generate_activity_name(
+                a["startTimeLocal"],
+                a.get("activityName", "Untitled"), # some activities have no name
+                a["activityId"]
+            ),
             'id': a["activityId"]
         }
         for a in garmin_activities
