@@ -16,7 +16,6 @@ import click
 
 from garminconnect import Garmin, GarminConnectAuthenticationError
 
-from sanitize_filename import sanitize
 
 __version__ = '2.0'
 TOKEN_STORE_DIR = "~/.garminconnect"
@@ -86,6 +85,16 @@ def generate_activity_name(date: str, name:str, act_id:str) -> str:
     suffix = sanitize(name.replace(' ', '_'))
     return f'{prefix}_{act_id}-{suffix}'
 
+
+def sanitize (filename: str) -> str:
+    """
+    return sanitized name of the activity file, built from the parameters
+    Simplified version of the sanitize function from sanitize-filename
+    """
+    blacklist = ["\\", "/", ":", "*", "?", "\"", "<", ">", "|", "\0"]
+    modified = "".join(c for c in filename if c not in blacklist)
+
+    return modified
 
 def get_downloads_by_date(
     path: str, 

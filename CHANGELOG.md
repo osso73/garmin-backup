@@ -7,6 +7,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Each version has its corresponding executable under folder `releases`.
 
 
+## v2.2 - 2025-04-19
+
+Replace sanitize library by function developed in the program.
+
+
+### Changed
+- Remove sanitize library, and replace by function, as per iss. #12.
+
+
 ## v2.1 - 2024-12-12
 
 Update of garminconnect library, following a change in Garmin Connect API.
