@@ -1,0 +1,27 @@
+[project]
+name = "garmin-backup"
+version = "2.2"
+description = "Script to backup your activities from Garmin to the local disk."
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+authors = [
+    { name = "osso73" }
+]
+
+dependencies = [
+    "click",
+    "garminconnect",
+    "requests",
+    "garth"
+]
+
+[project.scripts]
+garmin-backup = "garmin-backup:main"
+
+
+[dependency-groups]
+dev = [
+    "cx-freeze>=7.2.10",
+    "pytest>=8.3.5",
+]

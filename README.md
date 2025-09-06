@@ -13,23 +13,20 @@ Note this is just using a very limited subset of GarminConnect, only focused at 
 
 ## Installation
 
-Just clone or download the repository, create a virtual environment with the requirements, and that's it. You need to have python installed in your environment.
+This project is using `uv`, so you can install it simply by cloning the repository and running:
 
 ```bash
-git clone https://github.com/osso73/garmin-backup.git
-cd garmin-backup
-python -m venv .venv
-.venv/Scripts/activate.bat   # for linux use: source .venv/bin/activate
-pip install -r requirements.txt
+uv sync
 ```
 
-That's it, you can run the program in `src/garmin-backup`:
+Alternatively, you can create a virtual environment, and install the dependencies as per `pyproject.toml`.
+
+You can run the program in `src/garmin-backup`:
 
 ```bash
 cd src
 python garmin-backup data  # see the usage below for all the available options
 ```
-
 
 
 ## Usage
