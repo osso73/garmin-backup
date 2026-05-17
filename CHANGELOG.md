@@ -7,6 +7,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Each version has its corresponding executable under folder `releases`.
 
 
+## v2.3 - 2026-04-10
+
+Fix auth problem, after Garmin introduced a change in their authentication mechanism.
+
+
+### Changed
+- Added https headers agent description to avoid Cloudfare fingerprinting.
+
+
 ## v2.2 - 2025-04-19
 
 Replace sanitize library by function developed in the program.

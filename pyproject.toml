@@ -3,7 +3,7 @@ name = "garmin-backup"
 version = "2.2"
 description = "Script to backup your activities from Garmin to the local disk."
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.8,<3.14"
 license = { text = "MIT" }
 authors = [
     { name = "osso73" }
