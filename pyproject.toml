@@ -1,6 +1,6 @@
 [project]
 name = "garmin-backup"
-version = "2.2"
+version = "2.3"
 description = "Script to backup your activities from Garmin to the local disk."
 readme = "README.md"
 requires-python = ">=3.8,<3.14"
